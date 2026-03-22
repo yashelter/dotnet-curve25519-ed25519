@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using Core;
+using Core.Math;
 using Xunit.Abstractions;
 
 namespace Tests;
@@ -92,10 +93,12 @@ public class X25519Tests
 
     //  СРАВНИТЕЛЬНЫЙ БЕНЧМАРК ПРОИЗВОДИТЕЛЬНОСТИ ---
 
-    [Theory][InlineData(10_000)] 
-    //[InlineData(1_000_000)] // Раскомментируй для серьезного теста (может занять 2-5 минут)
+    [Theory]
+    [InlineData(10000)]
     public void PerformanceBenchmark_X25519(int iterations)
     {
+        long before = GC.GetTotalAllocatedBytes();
+            
         // 1. Подготовка общих данных (используем Вектор 1)
         byte[] scalar = HexToBytes("a546e36bf0527c9d3b16154b82465edd62144c0ac1fc5a18506a2244ba449ac4");
         byte[] uCoord = HexToBytes("e6db6867583030db3594c1a424b15f7c726624ec26b3353b10a903a6d0ab1c4c");
@@ -118,42 +121,26 @@ public class X25519Tests
         }
         sw1.Stop();
         _output.WriteLine($"[1] BouncyCastle (C# Эталон): {sw1.ElapsedMilliseconds} ms");
+        
+        long after = GC.GetTotalAllocatedBytes();
+        _output.WriteLine($"Выделено памяти: {(after - before) / 1024 } kбайт");
+        before = GC.GetTotalAllocatedBytes();
 
         // --- Тест 2: Твой Скалярный X25519 ---
         // Прогрев JIT
-        _ = X25519.Multiply(scalar, uCoord);
+        X25519.Multiply(scalar, uCoord, bcOutput);
         
         var sw2 = Stopwatch.StartNew();
         for (int i = 0; i < iterations; i++)
         {
-            _ = X25519.Multiply(scalar, uCoord);
+            X25519.Multiply(scalar, uCoord, bcOutput);
         }
         sw2.Stop();
         _output.WriteLine($"[2] Custom Scalar X25519:   {sw2.ElapsedMilliseconds} ms " +
                           $"(В {sw1.ElapsedMilliseconds / (double)sw2.ElapsedMilliseconds:F2}x раз быстрее BC)");
-
-        // --- Тест 3: Твой Batched SIMD X25519 ---
-        // Прогрев JIT
-        BatchedX25519.Multiply4(scalar, uCoord, out0, scalar, uCoord, out1, scalar, uCoord, out2, scalar, uCoord, out3);
         
-        int batchedIterations = iterations / 4; 
-        
-        var sw3 = Stopwatch.StartNew();
-        for (int i = 0; i < batchedIterations; i++)
-        {
-            BatchedX25519.Multiply4(
-                scalar, uCoord, out0,
-                scalar, uCoord, out1,
-                scalar, uCoord, out2,
-                scalar, uCoord, out3
-            );
-        }
-        sw3.Stop();
-        
-        _output.WriteLine($"[3] Custom Batched X25519:  {sw3.ElapsedMilliseconds} ms " +
-                          $"(В {sw2.ElapsedMilliseconds / (double)sw3.ElapsedMilliseconds:F2}x раз быстрее Скаляра, " +
-                          $"и в {sw1.ElapsedMilliseconds / (double)sw3.ElapsedMilliseconds:F2}x раз быстрее BC)");
-        
+        after = GC.GetTotalAllocatedBytes();
+        _output.WriteLine($"Выделено памяти: {(after - before) / 1024 } kбайт");
         _output.WriteLine("-------------------------------------------------");
     }
 }
