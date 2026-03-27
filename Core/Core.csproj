@@ -7,7 +7,12 @@
         <ServerGarbageCollection>true</ServerGarbageCollection>
         <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
         <IsAotCompatible>True</IsAotCompatible>
+        <TieredPGO>true</TieredPGO>
         <Optimize>true</Optimize>
+        <OptimizationPreference>Speed</OptimizationPreference>
+        <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+        <IlcInstructionSet>native,avx2,bmi2,popcnt,lzcnt</IlcInstructionSet>
+        <DebuggerSupport>false</DebuggerSupport>
     </PropertyGroup>
 
 </Project>

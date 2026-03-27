@@ -102,6 +102,10 @@ public class X25519Tests(ITestOutputHelper output)
 
     [Theory]
     [InlineData(100000)]
+    [InlineData(10000)]
+    [InlineData(1000)]
+    [InlineData(100)]
+    [InlineData(16)]
     public void PerformanceBenchmark_X25519(int iterations)
     {
             
