@@ -21,13 +21,13 @@ public static class Ed25519Batch
         FieldElement4.Multiply(ref B, in Y1_plus_X1, in Y2_plus_X2);
         
         FieldElement4.Multiply(ref C, in p1.T, in p2.T);
-        FieldElement4.Multiply(ref C, in C, in Ed25519Constants.D2); // C = T1 * T2 * 2d
+        FieldElement4.Multiply(ref C, in C, in Ed25519Constants.D2);
 
         FieldElement4.Multiply(ref D, in p1.Z, in p2.Z);
-        FieldElement4.Add(ref D, in D, in D); // D = 2 * Z1 * Z2
+        FieldElement4.Add(ref D, in D, in D);
 
-        FieldElement4.Apm(ref H, ref E, in B, in A); // H = B + A, E = B - A
-        FieldElement4.Apm(ref G, ref F, in D, in C); // G = D + C, F = D - C
+        FieldElement4.Apm(ref H, ref E, in B, in A);
+        FieldElement4.Apm(ref G, ref F, in D, in C);
 
         FieldElement4.Multiply(ref result.X, in E, in F);
         FieldElement4.Multiply(ref result.Y, in G, in H);
@@ -46,15 +46,15 @@ public static class Ed25519Batch
         FieldElement4.Square(ref B, in p.Y);
 
         FieldElement4.Square(ref C, in p.Z);
-        FieldElement4.Add(ref C, in C, in C); // C = 2 * Z1^2
+        FieldElement4.Add(ref C, in C, in C);
 
-        FieldElement4.Apm(ref H, ref G, in A, in B); // H = A + B, G = A - B
+        FieldElement4.Apm(ref H, ref G, in A, in B);
 
         FieldElement4.Add(ref X1_plus_Y1, in p.X, in p.Y);
         FieldElement4.Square(ref E, in X1_plus_Y1);
-        FieldElement4.Sub(ref E, in H, in E); // E = H - (X1 + Y1)^2 = -2X1Y1
+        FieldElement4.Sub(ref E, in H, in E);
 
-        FieldElement4.Add(ref F, in C, in G); // F = C + A - B = 2Z1^2 - (Y1^2 - X1^2)
+        FieldElement4.Add(ref F, in C, in G);
 
         FieldElement4.Multiply(ref result.X, in E, in F);
         FieldElement4.Multiply(ref result.Y, in G, in H);
@@ -62,46 +62,70 @@ public static class Ed25519Batch
         FieldElement4.Multiply(ref result.Z, in F, in G);
     }
 
-    
-    // --- Умножение скаляров ---
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void Multiply4(ReadOnlySpan<byte> scalars, in PointExt4 basePoints, out PointExt4 result)
     {
-        // Извлекаем маски битов ПЕРЕД циклом, чтобы не создавать Pipeline Stalls внутри горячего лупа
-        Span<Vector256<ulong>> k_masks = stackalloc Vector256<ulong>[256];
-        ReadOnlySpan<byte> k0 = scalars.Slice(0, 32);
-        ReadOnlySpan<byte> k1 = scalars.Slice(32, 32);
-        ReadOnlySpan<byte> k2 = scalars.Slice(64, 32);
-        ReadOnlySpan<byte> k3 = scalars.Slice(96, 32);
-
-        for (int t = 0; t < 256; t++)
+        // Предвычисляем 16 точек для нашего окна (0*P, 1*P, ..., 15*P)
+        Span<PointExt4> table = stackalloc PointExt4[16];
+        table[0] = PointExt4.Zero;
+        table[1] = basePoints;
+        for (int i = 2; i < 16; i++)
         {
-            int bit = t & 7;
-            int byteIndex = t >> 3;
-            
-            // Если бит равен 1, маска 0xFF..FF, иначе 0
-            k_masks[t] = Vector256.Create(
-                (ulong)((k0[byteIndex] >> bit) & 1) > 0 ? 0xFFFFFFFFFFFFFFFFUL : 0,
-                (ulong)((k1[byteIndex] >> bit) & 1) > 0 ? 0xFFFFFFFFFFFFFFFFUL : 0,
-                (ulong)((k2[byteIndex] >> bit) & 1) > 0 ? 0xFFFFFFFFFFFFFFFFUL : 0,
-                (ulong)((k3[byteIndex] >> bit) & 1) > 0 ? 0xFFFFFFFFFFFFFFFFUL : 0);
+            Add(ref table[i], in table[i - 1], in basePoints);
         }
 
         PointExt4 R = PointExt4.Zero;
         PointExt4 tempAdd = default;
 
-        // Константное время: Итерация Double-And-Add (без ветвлений)
-        for (int t = 255; t >= 0; t--)
+        //  Идем по 4 бита (256 бит / 4 = 64 итерации). От старших к младшим
+        for (int i = 63; i >= 0; i--)
         {
-            Double(ref R, in R);
-            Add(ref tempAdd, in R, in basePoints);
-            PointExt4.CSelect(ref R, in R, in tempAdd, k_masks[t]);
+            // Пропускаем 4 Double на самой первой итерации, так как R == Zero
+            if (i != 63)
+            {
+                Double(ref R, in R);
+                Double(ref R, in R);
+                Double(ref R, in R);
+                Double(ref R, in R);
+            }
+
+            Vector256<ulong> indices = Get4BitWindow(scalars, i);
+            
+            SelectPoint(ref tempAdd, table, indices);
+            Add(ref R, in R, in tempAdd);
         }
 
         result = R;
     }
 
-    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<ulong> Get4BitWindow(ReadOnlySpan<byte> scalars, int chunkIndex)
+    {
+        int byteIdx = chunkIndex >> 1; // Делим на 2
+        int shift = (chunkIndex & 1) << 2; // Умножаем остаток на 4 (0 или 4)
+
+        // Достаем значения 0..15 для каждого из 4 скаляров
+        ulong idx0 = (ulong)((scalars[byteIdx] >> shift) & 0x0F);
+        ulong idx1 = (ulong)((scalars[32 + byteIdx] >> shift) & 0x0F);
+        ulong idx2 = (ulong)((scalars[64 + byteIdx] >> shift) & 0x0F);
+        ulong idx3 = (ulong)((scalars[96 + byteIdx] >> shift) & 0x0F);
+
+        return Vector256.Create(idx0, idx1, idx2, idx3);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void SelectPoint(ref PointExt4 dest, ReadOnlySpan<PointExt4> table, Vector256<ulong> indices)
+    {
+        dest = table[0];
+        
+        // Переписываем каналы нужными точками, если их индекс совпал
+        for (ulong j = 1; j < 16; j++)
+        {
+            var matchMask = Vector256.Equals(indices, Vector256.Create(j));
+            PointExt4.CSelect(ref dest, in dest, in table[(int)j], matchMask);
+        }
+    }
+
     // --- Конвертация из Аффинных и обратно ---
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void FromAffine(out PointExt4 result, in FieldElement4 x, in FieldElement4 y)
@@ -112,7 +136,7 @@ public static class Ed25519Batch
         result.Z = FieldElement4.One;
         FieldElement4.Multiply(ref result.T, in x, in y);
     }
-
+    
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void ToAffine(in PointExt4 p, out FieldElement4 x, out FieldElement4 y)
     {

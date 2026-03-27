@@ -14,10 +14,10 @@ Console.WriteLine("Начинаем тестирование Ed25519...");
 Summary edSummary = BenchmarkRunner.Run<Ed25519Benchmarks>(testConfig);
 
 Console.WriteLine("Начинаем тестирование X25519...");
-Summary xSummary = BenchmarkRunner.Run<X25519Benchmarks>(testConfig);
+//Summary xSummary = BenchmarkRunner.Run<X25519Benchmarks>(testConfig);
 
 GenerateChart(edSummary, outputPath,"Ed25519_Performance");
-GenerateChart(xSummary,  outputPath, "X25519_Performance");
+//GenerateChart(xSummary,  outputPath, "X25519_Performance");
 
 Console.WriteLine($"\nThat's been done, out in:: {outputPath}");
 

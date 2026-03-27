@@ -9,7 +9,7 @@ namespace Benchmarks.Actions;
 [MemoryDiagnoser]
 public class Ed25519Benchmarks
 {
-    [Params(16, 100, 1000, 5000, 10000, 20000, 30000, 40000, 50000, 60000)]  // кратно 4
+    [Params(16, 100, 1000, 5000)]  // кратно 4
     public int N { get; set; } 
     
     private byte[] _randomScalars = null!;
