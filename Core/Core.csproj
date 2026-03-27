@@ -7,9 +7,7 @@
         <ServerGarbageCollection>true</ServerGarbageCollection>
         <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
         <IsAotCompatible>True</IsAotCompatible>
-        <TieredPGO>true</TieredPGO>
-        <TieredCompilationQuickJit>false</TieredCompilationQuickJit>
-        <IlcInstructionSet>avx2,bmi2,lzcnt</IlcInstructionSet>
+        <Optimize>true</Optimize>
     </PropertyGroup>
 
 </Project>

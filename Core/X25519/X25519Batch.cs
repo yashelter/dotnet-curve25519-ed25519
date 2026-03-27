@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using Core.Base;
 
 
 public static class X25519Batch
@@ -19,19 +18,6 @@ public static class X25519Batch
         k1[0] &= 248; k1[31] &= 127; k1[31] |= 64;
         k2[0] &= 248; k2[31] &= 127; k2[31] |= 64;
         k3[0] &= 248; k3[31] &= 127; k3[31] |= 64;
-        
-        // ПРЕДВЫЧИСЛЕНИЕ МАСОК ПЕРЕД ЦИКЛОМ (Убираем stall-ы)
-        Span<Vector256<ulong>> k_masks = stackalloc Vector256<ulong>[255];
-        for (int t = 254; t >= 0; t--)
-        {
-            int bit = t & 7;
-            int byteIndex = t >> 3;
-            k_masks[t] = Vector256.Create(
-                (ulong)((k0[byteIndex] >> bit) & 1),
-                (ulong)((k1[byteIndex] >> bit) & 1),
-                (ulong)((k2[byteIndex] >> bit) & 1),
-                (ulong)((k3[byteIndex] >> bit) & 1));
-        }
 
         FieldElement4 x_1 = FieldElement4.FromBytes(uCoordinates);
         FieldElement4 x_2 = FieldElement4.One, z_2 = FieldElement4.Zero;
@@ -46,7 +32,15 @@ public static class X25519Batch
 
         for (int t = 254; t >= 0; t--)
         {
-            Vector256<ulong> k_t = k_masks[t];
+            int bit = t & 7;
+            int byteIndex = t >> 3;
+
+            // Извлекаем нужные биты без ветвлений и условной логики массива
+            Vector256<ulong> k_t = Vector256.Create(
+                (ulong)((k0[byteIndex] >> bit) & 1),
+                (ulong)((k1[byteIndex] >> bit) & 1),
+                (ulong)((k2[byteIndex] >> bit) & 1),
+                (ulong)((k3[byteIndex] >> bit) & 1));
 
             swap = Avx2.Xor(swap, k_t);
             FieldElement4.CSwap(ref x_2, ref x_3, swap);

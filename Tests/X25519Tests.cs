@@ -101,9 +101,6 @@ public class X25519Tests(ITestOutputHelper output)
     //  СРАВНИТЕЛЬНЫЙ БЕНЧМАРК ПРОИЗВОДИТЕЛЬНОСТИ ---
 
     [Theory]
-    [InlineData(2000)]
-    [InlineData(4000)]
-    [InlineData(8000)]
     [InlineData(100000)]
     public void PerformanceBenchmark_X25519(int iterations)
     {
@@ -136,22 +133,7 @@ public class X25519Tests(ITestOutputHelper output)
         output.WriteLine($"Выделено памяти: {(after - before) / 1024 } kбайт");
 
         // --- Тест 2: Скалярный X25519 ---
-        // Прогрев JIT
-        X25519.Multiply(scalar, uCoord, bcOutput);
-        before = GC.GetTotalAllocatedBytes();
-
-        var sw2 = Stopwatch.StartNew();
-        for (int i = 0; i < iterations; i++)
-        {
-            //X25519.Multiply(scalar, uCoord, bcOutput);
-        }
-        sw2.Stop();
-        output.WriteLine($"[2] Custom Scalar X25519:   {sw2.ElapsedMilliseconds} ms " +
-                          $"(В {sw1.ElapsedMilliseconds / (double)sw2.ElapsedMilliseconds:F2}x раз быстрее BC)");
-        
-        after = GC.GetTotalAllocatedBytes();
-        output.WriteLine($"Выделено памяти: {(after - before) / 1024 } kбайт");
-        
+        // no --> ignore
         // --- Тест 3: Batched X25519 ---
 
         before = GC.GetTotalAllocatedBytes();
@@ -188,7 +170,7 @@ public class X25519Tests(ITestOutputHelper output)
         {
             X25519Batch.Multiply4(scalars, uCoords, output1);
         }
-        sw2.Stop();
+        sw3.Stop();
         output.WriteLine($"[2] Batch  Scalar X25519:   {sw3.ElapsedMilliseconds} ms " +
                           $"(В {sw1.ElapsedMilliseconds / (double)sw3.ElapsedMilliseconds:F2}x раз быстрее BC)");
         
