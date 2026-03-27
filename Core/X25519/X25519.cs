@@ -1,6 +1,6 @@
-﻿using Core.Math;
+﻿using Core.Base;
 
-namespace Core;
+namespace Core.X25519;
 
 public static class X25519
 {
@@ -36,7 +36,7 @@ public static class X25519
 
         for (int t = 254; t >= 0; t--)
         {
-            int k_t = (k[t >> 3] >> (t & 7)) & 1; // Оптимизировано деление
+            int k_t = (k[t >> 3] >> (t & 7)) & 1; // Более эффективное деление
             
             swap ^= k_t;
             FieldElement.CSwap(ref x_2, ref x_3, swap);

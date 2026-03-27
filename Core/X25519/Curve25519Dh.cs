@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace Core;
+namespace Core.X25519;
 
 
 /// <summary>
