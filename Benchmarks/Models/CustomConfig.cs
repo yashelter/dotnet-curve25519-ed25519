@@ -26,7 +26,7 @@ public class CustomConfig : ManualConfig
         AddJob(Job.Default
                 .WithLaunchCount(1)        // 1 изолированный процесс для теста
                 .WithWarmupCount(5)        // 5 итераций на прогрев JIT
-                .WithIterationCount(5)  
+                .WithIterationCount(100)  
                 .WithGcForce(true)
         );
     }

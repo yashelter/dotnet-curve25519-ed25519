@@ -6,10 +6,9 @@ using BcX25519 = Org.BouncyCastle.Math.EC.Rfc7748.X25519;
 namespace Benchmarks.Actions;
 
 [MemoryDiagnoser]
-public class X25519Benchmarks
+public abstract class X25519BenchmarksBase
 {
-    [Params(16, 100, 1000, 5000, 10000, 20000, 30000, 40000, 50000, 60000)]  // кратно 4
-    public int N { get; set; }
+    public abstract int N { get; set; }
     
     private byte[] _randomKeys = null!;
     private byte[] _outputBufferBc = null!;

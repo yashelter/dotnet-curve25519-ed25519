@@ -7,23 +7,19 @@ using Org.BouncyCastle.Math.EC.Rfc8032;
 namespace Benchmarks.Actions;
 
 [MemoryDiagnoser]
-public class Ed25519Benchmarks
+public abstract class Ed25519BenchmarksBase
 {
-    [Params(16, 100, 1000, 5000)]  // кратно 4
-    public int N { get; set; } 
+    public abstract int N { get; set; } 
     
     private byte[] _randomScalars = null!;
     private byte[] _basePointBytes = null!;
-    private PointExt4 _basePointBatch;
-    
-    private byte[] _outputBc = null!;
     
     // Данные для BouncyCastle
     private Ed25519.PointAffine _bcBasePoint;
     
     // Данные для Custom AVX2
-    private Core.Ed25519.PointExt4 _customBasePointBatch;
-    private Core.Ed25519.PointExt4 _outputCustom;
+    private PointExt4 _customBasePointBatch;
+    private PointExt4 _outputCustom;
     
     
     [GlobalSetup]

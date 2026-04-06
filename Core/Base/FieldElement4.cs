@@ -27,7 +27,7 @@ public struct FieldElement4
         L0 = l0; L1 = l1; L2 = l2; L3 = l3; L4 = l4;
     }
 
-    // --- Векторные сложения, вычитания и свап ---
+    // --- Векторные сложения, вычитания и swap ---
 
     [MethodImpl(MethodImplOptions.AggressiveInlining & MethodImplOptions.AggressiveOptimization)]
     public static void Add(ref FieldElement4 result, in FieldElement4 a, in FieldElement4 b)
