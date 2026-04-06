@@ -1,0 +1,77 @@
+\documentclass{includes/Thesis}
+
+\usepackage{enumitem}
+\usepackage{amssymb}
+
+% Список первого уровня (itemize)
+\setlist[itemize,1]{
+    label=\textbullet,  % Символ: маленькая точка (точка по центру строки)
+    leftmargin=1.75cm,          % Общий отступ слева для всего элемента списка
+    itemsep=0\baselineskip,   % Вертикальный отступ между пунктами (можно 0pt для плотного списка)
+    topsep=0\baselineskip     % Вертикальный отступ до и после всего списка
+}
+
+% Список второго уровня (itemize)
+\setlist[itemize,2]{
+    label=$\circ$,
+    leftmargin=1.75cm,           % Общий отступ слева для всего элемента списка
+    itemsep=0\baselineskip,
+    topsep=0\baselineskip
+}
+
+% Список третьего уровня (itemize)
+\setlist[itemize,3]{
+    label=\scalebox{0.6}{$\blacksquare$},
+    leftmargin=1.75cm,           % Общий отступ слева для всего элемента списка
+    itemsep=0\baselineskip,
+    topsep=0\baselineskip
+}
+
+\sloppy
+
+\addbibresource{parts/refs.bib}
+
+\AtBeginDocument{
+    \renewcommand{\contentsname}{СОДЕРЖАНИЕ}
+}
+
+\begin{thesis}[
+        institute = ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ «МОСКОВСКИЙ АВИАЦИОННЫЙ ИНСТИТУТ (НАЦИОНАЛЬНЫЙ ИССЛЕДОВАТЕЛЬСКИЙ УНИВЕРСИТЕТ)»,
+        faculty = Компьютерные науки и прикладная математика,
+        %
+        title = Проектирование и реализация персонального ассистента для автоматизации управления задачами с использованием искусственного интеллекта,
+        year = 2025,
+        %
+        authorGroup = М8О-411Б-22,
+        educationalProgram = 02.03.02 «Фундаментальная информатика и информационные технологии»,
+        authorName = М. С. Губарев,
+        %
+        academicTeacherTitle = {Кандидат физико-математических наук, доцент},
+        academicTeacherName = А. М. Романенков,
+        %
+        academicSupervisorTitle = {Директор инстстута Компьютерные науки и прикладная математика, кандидат физико-математических наук, доцент},
+        academicSupervisorName = С. С. Крылов,
+        %
+        isAcademic,
+        UDC = 004.89,
+        %
+        keywordsRu={Curve25519; Ed25519; .NET; C\#; SIMD; AVX2; Криптография; Zero Allocation}
+        keywordsEn = AI Assistant; Automated Task Management; Getting Things Done (GTD); Microservice Architecture; C++; YandexGPT; Telegram Bot,
+    ]
+
+    \setAbstractResource{parts/abstract-ru}{parts/abstract-en}
+
+    \setTerminologyResource{parts/terminology}
+
+    \setIntroResource{parts/intro}
+
+    \addChapter{Теоретические основы и математический аппарат криптографических примитивов}{parts/chapter1}
+    \addChapter{Проектирование архитектуры и программных решений высокопроизводительной криптографической библиотеки}{parts/chapter2}
+    \addChapter{Практическая реализация и анализ производительности криптографических примитивов}{parts/chapter3}
+    \addChapter{АНАЛИЗ РЕЗУЛЬТАТОВ И ПЕРСПЕКТИВЫ РАЗВИТИЯ}{parts/chapter4}
+
+    \setConclusionResource{parts/conclusion}
+
+    \addAppendix{Листинг кода}{parts/appendix-example-1}
+
+\end{thesis}

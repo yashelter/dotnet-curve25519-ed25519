@@ -1,0 +1,50 @@
+\begin{lstlisting}[language=sql,caption={Схема базы данных current\_actions},label=sql:1]
+CREATE TABLE IF NOT EXISTS current_actions.tasks (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         BIGINT NOT NULL,
+    name            TEXT NOT NULL,
+    description     TEXT NOT NULL,
+    status          current_actions.task_status NOT NULL DEFAULT 'active',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    completed_at    TIMESTAMPTZ NULL
+);
+\end{lstlisting}
+
+\begin{lstlisting}[language=sql,caption={Запрос для получения списка задач},label=sql:2]
+-- kSelectTasks
+-- $1 - user_id
+-- $2 - updated_at (cursor field)
+-- $3 - id (cursor field)
+-- $4 - status (filter)
+-- $5 - limit
+
+WITH selected_tasks AS (
+    SELECT
+        t.id,
+        t.updated_at
+    FROM current_actions.tasks t
+    WHERE
+        t.user_id = $1
+        AND ($4::current_actions.task_status IS NULL OR t.status = $4)
+        AND (
+            ($2::TIMESTAMPTZ IS NULL AND $3::UUID IS NULL)
+            OR
+            (t.updated_at >= $2 AND t.id >= $3) -- Keyset condition
+        )
+    ORDER BY
+        t.updated_at ASC,
+        t.id ASC
+    LIMIT $5
+)
+SELECT
+    t.id, t.user_id, t.name, t.description, t.status,
+    t.created_at, t.updated_at, t.completed_at
+FROM
+    current_actions.tasks t
+JOIN
+    selected_tasks s ON t.id = s.id
+ORDER BY
+    t.updated_at ASC,
+    t.id ASC;
+\end{lstlisting}
