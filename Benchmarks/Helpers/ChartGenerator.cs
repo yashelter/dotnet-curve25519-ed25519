@@ -163,7 +163,7 @@ public static class ChartGenerator
         for (int i = 0; i < xs.Length; i++)
         {
             var txt = myPlot.Add.Text($"{speedups[i]:F1}x", xs[i], customTimes[i]);
-            txt.LabelFontSize = 14;
+            txt.LabelFontSize = 16;
             txt.LabelBold = true;
             txt.LabelFontColor = Colors.SteelBlue;
             txt.LabelAlignment = Alignment.UpperCenter;
@@ -172,8 +172,12 @@ public static class ChartGenerator
 
         myPlot.Title(title);
         myPlot.XLabel("Количество операций");
+        myPlot.Axes.Bottom.Label.OffsetX = 0;
+        myPlot.Axes.Bottom.Label.Padding = 30;
+        
         myPlot.YLabel("Время выполнения (ms)");
         myPlot.ShowLegend(Alignment.UpperLeft); 
+        
 
         Tick[] xTicks = new Tick[originalN.Length];
         for (int i = 0; i < originalN.Length; i++)
@@ -181,7 +185,12 @@ public static class ChartGenerator
             xTicks[i] = new Tick(xs[i], FormatNumberToK(originalN[i]));
         }
         myPlot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(xTicks);
+        myPlot.Axes.Bottom.TickLabelStyle.FontSize = 16;
+        myPlot.Axes.Bottom.TickLabelStyle.Bold = true;
         myPlot.Axes.Bottom.TickLabelStyle.Rotation = -45;
+        myPlot.Axes.Bottom.TickLabelStyle.Alignment = Alignment.MiddleRight;
+        myPlot.Axes.Bottom.TickLabelStyle.Padding = 12;
+        myPlot.Axes.Bottom.MinimumSize = 120; 
         
         double maxTime = Math.Max(bcTimes.Max(), customTimes.Max());
         myPlot.Axes.SetLimitsY(0, maxTime * 1.25);

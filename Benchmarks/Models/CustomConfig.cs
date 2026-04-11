@@ -24,10 +24,14 @@ public class CustomConfig : ManualConfig
         
         // Настраиваем Job: 1 процесс, 5 прогревов, 100 итераций измерений
         AddJob(Job.Default
+                .WithAffinity((IntPtr)2) 
                 .WithLaunchCount(1)        // 1 изолированный процесс для теста
                 .WithWarmupCount(5)        // 5 итераций на прогрев JIT
-                .WithIterationCount(100)  
+                .WithIterationCount(50)
                 .WithGcForce(true)
+                .AsDefault()
         );
     }
 }
+
+//dotnet run -c Release -- "C:\Users\yashelter\Desktop\DotnetCurve25519\OutLogs\" 

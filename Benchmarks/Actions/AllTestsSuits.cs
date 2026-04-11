@@ -35,6 +35,6 @@ public class LargeNBenchmarksX25519 : X25519BenchmarksBase
 
 public class AllNBenchmarksX25519 : X25519BenchmarksBase
 {
-    [Params(20000, 30000, 40000, 50000, 100000, 200000, 400000, 800000)]
+    [Params(40000, 50000, 100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 1000000)]
     public override int N { get; set; }
 }
