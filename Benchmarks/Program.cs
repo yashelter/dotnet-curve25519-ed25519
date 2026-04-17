@@ -31,7 +31,7 @@ GenerateChart(x2,  outputPath, Path.Combine("img", "X25519_Performance_large"));
 */
 
 Summary x3 = BenchmarkRunner.Run<AllNBenchmarksX25519>(testConfig);
-GenerateChart(x3,  outputPath, Path.Combine("img", "ALL_X25519_Performance"));
+GenerateChart(x3,  outputPath, Path.Combine("img", "1_ALL_X25519_Performance"));
 
 Console.WriteLine($"\nThat's been done, out in:: {outputPath}");
 

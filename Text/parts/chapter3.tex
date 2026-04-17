@@ -6,8 +6,8 @@
 
 \begin{enumerate}
     \item \texttt{System.Runtime.Intrinsics}: пространство имен, предоставляющее прямой доступ к SIMD-инструкциям процессора (AVX2, BMI2). Вызовы методов из этого пространства транслируются JIT-компилятором (Just-In-Time) непосредственно в ассемблерные инструкции без накладных расходов на вызов функций.
-    \item \texttt{System.UInt128}: встроенный 128-битный целочисленный тип, необходимый для хранения промежуточных результатов перемножения 64-битных лимбов без переполнения.
-    \item \textbf{BenchmarkDotNet}: индустриальный стандарт для микро-бенчмаркинга в экосистеме .NET, используемый для точного измерения времени выполнения криптографических операций с изоляцией влияния JIT-компиляции и сборщика мусора.
+    \item \textbf{Средства языка C#: ref struct, in, out}: средства языка позволяющие работать с данными на стеке, избегая аллокаций в управляемой куче и обеспечивая безопасность типов
+    \item \textbf{BenchmarkDotNet}: индустриальный стандарт для бенчмаркинга в экосистеме .NET, используемый для точного измерения времени выполнения криптографических операций с изоляцией влияния JIT-компиляции и сборщика мусора.
 \end{enumerate}
 
 \subsection{Реализация вычислительного ядра (Field Arithmetic)}
@@ -16,9 +16,11 @@
 
 \subsubsection{Векторизация и пакетная обработка (AVX2)}
 
-Структура элементов поля, которая использует парадигму SoA (Structure of Arrays), \texttt{FieldElement4} спроектирована как \texttt{ref struct}, что гарантирует ее размещение исключительно на стеке. В листинге \ref{lst:field_element} представлена базовая структура данных.
+Структура элементов поля, которая использует парадигму SoA (Structure of Arrays), \texttt{FieldElement4} 
+спроектирована как \texttt{ref struct}, что гарантирует ее размещение исключительно на стеке. 
+В листинге \ref{lst:field_element4} представлена базовая структура данных.
 
-\begin{lstlisting}[language=csharp, caption={екторное представление элементов поля для пакетной обработки}, label={lst:field_element4}]
+\begin{lstlisting}[language=csharp, caption={Векторное представление элементов поля для пакетной обработки}, label={lst:field_element4}]
 [StructLayout(LayoutKind.Sequential)]
 public struct FieldElement4
 {
@@ -34,7 +36,7 @@ public struct FieldElement4
 
 Математические операции для данной структуры были написаны с использованием интринсиков. Умножение и сложение делегируются методам \texttt{Avx2.Add} и \texttt{Avx2.Multiply}, что позволяет за один такт процессора обрабатывать 4 независимых криптографических контекста.
 
-\begin{lstlisting}[language={[Sharp]C}, caption={Сложение}, label={lst:add}]
+\begin{lstlisting}[language={[Sharp]C}, caption={Операция сложения}, label={lst:add}]
 [MethodImpl(MethodImplOptions.AggressiveInlining & MethodImplOptions.AggressiveOptimization)]
 public static void Add(ref FieldElement4 result, in FieldElement4 a, in FieldElement4 b)
 {
@@ -48,7 +50,7 @@ public static void Add(ref FieldElement4 result, in FieldElement4 a, in FieldEle
 
 
 
-\begin{lstlisting}[language={[Sharp]C}, caption={Вычитание}, label={lst:sub}]
+\begin{lstlisting}[language={[Sharp]C}, caption={Операция вычитания}, label={lst:sub}]
 [MethodImpl(MethodImplOptions.AggressiveInlining & MethodImplOptions.AggressiveOptimization)]
 public static void Sub(ref FieldElement4 result, in FieldElement4 a, in FieldElement4 b)
 {
@@ -59,6 +61,48 @@ public static void Sub(ref FieldElement4 result, in FieldElement4 a, in FieldEle
     result.L4 = Avx2.Subtract(Avx2.Add(a.L4, AddConst1), b.L4);
 }
 \end{lstlisting}
+
+\begin{lstlisting}[language={[Sharp]C}, caption={Вспомогательная функция для добавления переноса}, label={lst:sub}]
+
+[MethodImpl(MethodImplOptions.AggressiveInlining)]
+private static void AddCarry(ref Vector256<ulong> hi, ref Vector256<ulong> lo, Vector256<ulong> c)
+{
+    var new_lo = Avx2.Add(lo, c);
+    var carry = CarryMask(lo, new_lo);
+    lo = new_lo;
+    hi = Avx2.Subtract(hi, carry);
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language={[Sharp]C}, caption={Фрагмент операции умножения}, label={lst:sub}]
+[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+
+public static void Multiply(ref FieldElement4 result, in FieldElement4 f, in FieldElement4 g)
+{
+    var f0 = f.L0; var f1 = f.L1; var f2 = f.L2; var f3 = f.L3; var f4 = f.L4;
+    var g0 = g.L0; var g1 = g.L1; var g2 = g.L2; var g3 = g.L3; var g4 = g.L4;
+    var g1_19 = Mul19(g1); var g2_19 = Mul19(g2); var g3_19 = Mul19(g3); var g4_19 = Mul19(g4);
+    Vector256<ulong> hi, lo, c;
+
+    // r0
+    BigMul(f0, g0, out lo, out hi);
+    Mac(ref hi, ref lo, f1, g4_19); Mac(ref hi, ref lo, f2, g3_19);
+    Mac(ref hi, ref lo, f3, g2_19); Mac(ref hi, ref lo, f4, g1_19);
+    var res0 = Avx2.And(lo, Mask51Vec);
+    c = Avx2.Or(Avx2.ShiftRightLogical(lo, 51), Avx2.ShiftLeftLogical(hi, 13));
+
+    // r1   
+    BigMul(f0, g1, out lo, out hi); AddCarry(ref hi, ref lo, c);
+    Mac(ref hi, ref lo, f1, g0); Mac(ref hi, ref lo, f2, g4_19);
+    Mac(ref hi, ref lo, f3, g3_19); Mac(ref hi, ref lo, f4, g2_19);
+    var res1 = Avx2.And(lo, Mask51Vec);
+    c = Avx2.Or(Avx2.ShiftRightLogical(lo, 51), Avx2.ShiftLeftLogical(hi, 13));
+
+    //  other lines ...
+}
+\end{lstlisting}
+
+
 
 \subsection{Реализация защиты от атак по сторонним каналам}
 
@@ -109,16 +153,77 @@ public static void CSwap(ref FieldElement4 a, ref FieldElement4 b, Vector256<ulo
     \item Измеряемые операции: умножение точкек на кривых (X25519 и Ed25519).
 \end{itemize}
 
-Для корректности сравнения операция пакетной обработки (Batched 4x) оценивалась по \textbf{пропускной способности} — среднему времени, затрачиваемому на обработку \textit{одного} элемента из пакета.
-
 \subsection{Результаты тестирования}
 
-Результаты измерений времени выполнения (Mean) и количества выделяемой памяти в куче (Allocated) представлены в Таблице \ref{tab:benchmarks}. 
+На рисунках \ref{fig:ed25519_bench1}, \ref{fig:ed25519_bench2} и \ref{fig:ed25519_bench3}, представлены графики производительности разработанной библиотеки 
+по сравнению с BouncyCastle для операции умножения точек на кривой Ed25519 на разном числе последовательных операций умножения.
 
-\textit{(todo: тут будут графики).}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/Ed25519_3.png}
+    \caption{Сравнение кривой Ed25519 на малом числе операций}
+    \label{fig:ed25519_bench1}
+\end{figure}
 
-\todoref[Здесь]{Тут будут графики и таблицы с результатами бенчмаркинга, сравнивающие производительность разработанной библиотеки с
- Bouncy Castle для различных операций}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/Ed25519_2.png}
+    \caption{Сравнение кривой Ed25519 на среднем числе операций}
+    \label{fig:ed25519_bench2}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/Ed25519_1.png}
+    \caption{Сравнение кривой Ed25519 на большом числе операций}
+    \label{fig:ed25519_bench3}
+\end{figure}
+
+На рисунках \ref{fig:x25519_bench1}, \ref{fig:x25519_bench2} и  \ref{fig:x25519_bench3}, представлены графики производительности разработанной библиотеки 
+по сравнению с BouncyCastle для операции умножения точек на кривой X25519 на разном числе последовательных операций умножения.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/X25519_3.png}
+    \caption{Сравнение кривой X25519 на малом числе операций}
+    \label{fig:x25519_bench1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/X25519_2.png}
+    \caption{Сравнение кривой X25519 на среднем числе операций}
+    \label{fig:x25519_bench2}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/X25519_1.png}
+    \caption{Сравнение кривой X25519 на большом числе операций}
+    \label{fig:x25519_bench3}
+\end{figure}
+
+
+Результаты измерений количества выделяемой памяти в куче (Allocated Memory) представлены в на рисунках
+ \ref{fig:ed255x25519_table19_bench} и \ref{fig:x25519_table} для кривой Ed25519 и X25519 соответственно.
+ В обоих случаях разработанная библиотека не производит аллокаций в управляемой куче, что подтверждает эффективность примененных паттернов Zero Allocation.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/table1.png}
+    \caption{Сравнение кривой Ed25519 на среднем числе операций}
+    \label{fig:x25519_table}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/table2.png}
+    \caption{Сравнение кривой X25519 на большом числе операций}
+    \label{fig:x25519_table}
+\end{figure}
 
 
 
@@ -127,17 +232,8 @@ public static void CSwap(ref FieldElement4 a, ref FieldElement4 b, Vector256<ulo
 Анализ данных, полученных в ходе профилирования, позволяет сделать следующие выводы:
 
 \begin{enumerate}   
-    \item \textbf{Эффективность SIMD-векторизации.} Применение пакетной обработки (AVX2 Batched) обеспечивает качественный скачок в производительности. Время, затрачиваемое процессором на одну операцию в пакете из 4-х задач, сокращается практически вдвое по сравнению со скалярной версией Bouncy Castle. Разработанное ядро с поддержкой AVX2 превосходит индустриальный стандарт на \textbf{$\sim 40\%$ (или на $\sim 30\%$ при учете накладных расходов на транспонирование данных)}.
-    
+    \item \textbf{Эффективность SIMD-векторизации.} Применение пакетной обработки (AVX2 Batched) обеспечивает качественный скачок в производительности. Время, затрачиваемое процессором на одну операцию в пакете из 4-х задач, сокращается практически вдвое по сравнению со скалярной версией Bouncy Castle. Разработанное ядро с поддержкой AVX2 превосходит индустриальный стандарт на \textbf{$\sim 30\% - \sim 80\%$}.
+    \item \textbf{Отсутсвие выделений памяти в куче.} Применение паттернов Zero Allocation (использование \texttt{ref struct}, \texttt{stackalloc} и \texttt{Span<byte>}) позволило полностью исключить работу сборщика мусора, для выполнения всех опреаций.
     \item \textbf{Масштабируемость.} Использование парадигмы SoA (Structure of Arrays) закладывает основу для будущей интеграции инструкций \textbf{AVX-512}, поддержка которых появилась в последних версиях .NET. Расширение ширины вектора до 512 бит позволит без изменения общей архитектуры подписывать сразу 8 сообщений одновременно, что еще больше увеличит отрыв от классических реализаций.
 \end{enumerate}
 
-
-\subsection*{Выводы по главе 3}
-\addcontentsline{toc}{section}{Выводы по главе 3}
-
-В рамках данной главы была успешно реализована спроектированная ранее архитектура высокопроизводительной криптографической библиотеки для платформы .NET. 
-
-На практике доказана эффективность применения языка C\# для низкоуровневых математических оптимизаций. Использование структур типа \texttt{ref struct} в связке с \texttt{Span<byte>} позволило создать безопасное публичное API, исключающее нагрузку на управляемую кучу (Garbage Collector). 
-
-Впервые в управляемом коде реализована пакетная обработка алгоритмов X25519 и Ed25519 с применением аппаратных интринсиков \texttt{System.Runtime.Intrinsics.X86.Avx2}. Результаты бенчмаркинга объективно подтверждают научную и практическую ценность работы: разработанный программный комплекс превосходит широко используемую библиотеку Bouncy Castle более чем на 30\% по пропускной способности, обеспечивая при этом строгую математическую защиту от атак по сторонним каналам за счет константного времени выполнения (constant-time). Полученные результаты полностью соответствуют поставленной цели выпускной квалификационной работы.
