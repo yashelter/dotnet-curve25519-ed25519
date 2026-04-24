@@ -304,12 +304,12 @@
 \newcommand{\@abstract}[2]{
     \clearpage
     \phantomsection
-    \section*{РЕФЕРАТ} % TODO: "Реферат" или "Аннотация"?
-    % \addcontentsline{toc}{section}{РЕФЕРАТ}
+    \section*{РЕФЕРАТ}
 
-    \@abstractTotalCountsRu
-
-    \@keywordsRu
+    \noindent\@abstractTotalCountsRu
+    
+    \vspace{1ex}
+    \noindent\@keywordsRu
     
     \input{#1}
 }
@@ -409,11 +409,13 @@
     \clearpage
     \refstepcounter{appendicesnum}
     \label{appendix:\arabic{appendicesnum}}
-    \begin{flushright}
-        \Large \textbf{\textsc{приложение \theappendicesnum{}}}
-    \end{flushright}
     \setcounter{secnumdepth}{0}
-    \section[ПРИЛОЖЕНИЕ \theappendicesnum{}]{#1}
+
+    \begin{center}
+        \Large \textbf{\textsc{приложение \theappendicesnum{}}} \\[1ex]
+        \Large \textbf{#1}
+    \end{center}
+
     \setcounter{secnumdepth}{4}
     \input{#2}
 }
@@ -506,6 +508,7 @@
 	singlelinecheck=false,
 	labelsep=emdash
 }
+\captionsetup[lstlisting]{justification=raggedright, singlelinecheck=false}
 
 % Изменяем "Рис." на "Рисунок" для подписей к рисункам на русском языке
 \addto\captionsrussian{%
@@ -761,8 +764,8 @@
     \DTLifdbexists{list}{\DTLcleardb{list}}{\DTLnewdb{list}}
 }{
     \DTLsort*{termLabel}{list}
-    \begin{itemize}[leftmargin=0pt, itemindent=\parindent]
-        \DTLforeach*{list}{\theLabel=termLabel, \theDesc=termDesc}{\item[] \textbf{\theLabel}~-- \theDesc}
+    \begin{itemize}[leftmargin=0pt, itemindent=0pt]
+        \DTLforeach*{list}{\theLabel=termLabel, \theDesc=termDesc}{\item[] \theLabel~-- \theDesc}
     \end{itemize}
 }
 
@@ -812,7 +815,7 @@
     stepnumber=1,
     firstnumber=1,
     backgroundcolor=\color{white},
-    captionpos=b,
+    captionpos=t,
     caption=\@TODO
 }
 
