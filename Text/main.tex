@@ -1,0 +1,77 @@
+\documentclass{includes/Thesis}
+
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage{qrcode}
+
+% Список первого уровня (itemize)
+\setlist[itemize,1]{
+    label=\textbullet,  % Символ: маленькая точка (точка по центру строки)
+    leftmargin=1.75cm,          % Общий отступ слева для всего элемента списка
+    itemsep=0\baselineskip,   % Вертикальный отступ между пунктами (можно 0pt для плотного списка)
+    topsep=0\baselineskip     % Вертикальный отступ до и после всего списка
+}
+
+% Список второго уровня (itemize)
+\setlist[itemize,2]{
+    label=$\circ$,
+    leftmargin=1.75cm,           % Общий отступ слева для всего элемента списка
+    itemsep=0\baselineskip,
+    topsep=0\baselineskip
+}
+
+% Список третьего уровня (itemize)
+\setlist[itemize,3]{
+    label=\scalebox{0.6}{$\blacksquare$},
+    leftmargin=1.75cm,           % Общий отступ слева для всего элемента списка
+    itemsep=0\baselineskip,
+    topsep=0\baselineskip
+}
+
+\sloppy
+
+\addbibresource{parts/refs.bib}
+
+\AtBeginDocument{
+    \renewcommand{\contentsname}{СОДЕРЖАНИЕ}
+}
+
+\begin{thesis}[
+        institute = ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ АВТОНОМНОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ «МОСКОВСКИЙ АВИАЦИОННЫЙ ИНСТИТУТ (НАЦИОНАЛЬНЫЙ ИССЛЕДОВАТЕЛЬСКИЙ УНИВЕРСИТЕТ)»,
+        faculty = Компьютерные науки и прикладная математика,
+        %
+        title = Проектирование и реализация высокопроизводительных криптографических примитивов Curve25519/Ed25519 для .NET,
+        year = 2026,
+        %
+        authorGroup = М8О-411Б-22,
+        educationalProgram = 02.03.02 «Фундаментальная информатика и информационные технологии»,
+        authorName = М. С. Губарев,
+        %
+        academicTeacherTitle = {Кандидат физико-математических наук, доцент},
+        academicTeacherName = А. М. Романенков,
+        %
+        academicSupervisorTitle = {Директор инстстута Компьютерные науки и прикладная математика, кандидат физико-математических наук, доцент},
+        academicSupervisorName = С. С. Крылов,
+        %
+        isAcademic,
+        UDC = 004.89,
+        %
+        keywordsRu={CURVE25519; ED25519; .NET; C\#; SIMD; AVX2; КРИПТОГРАФИЯ; ZERO ALLOCATION},
+        keywordsRu={CURVE25519; ED25519; .NET; C\#; SIMD; AVX2; КРИПТОГРАФИЯ; ZERO ALLOCATION},
+    ]
+    \setAbstractResource{parts/abstract-ru}{parts/abstract-en}
+
+    \setTerminologyResource{parts/terminology}
+
+    \setIntroResource{parts/intro}
+
+    \addChapter{ТЕОРЕТИЧЕСКИЕ ОСНОВЫ И МАТЕМАТИЧЕСКИЙ АППАРАТ КРИПТОГРАФИЧЕСКИХ ПРИМИТИВОВ}{parts/chapter1}
+    \addChapter{ПРОЕКТИРОВАНИЕ АРХИТЕКТУРЫ И ПРОГРАММНЫХ РЕШЕНИЙ ВЫСОКПРОИЗВОДИТЕЛЬНОЙ КРИПТОГРАФИЧЕСКОЙ БИБЛИОТЕКИ}{parts/chapter2}
+    \addChapter{ПРАКТИЧЕСКАЯ РЕАЛИЗАЦИЯ И АНАЛИЗ ПРОИЗВОДИТЕЛЬНОСТИ КРИПТОГРАФИЧЕСКИХ ПРИМИТИВОВ}{parts/chapter3}
+    \addChapter{АНАЛИЗ РЕЗУЛЬТАТОВ И ПЕРСПЕКТИВЫ РАЗВИТИЯ}{parts/chapter4}
+
+    \setConclusionResource{parts/conclusion}
+
+    \addAppendix{Репозиторий с исходным кодом}{parts/appendix_a}
+
+\end{thesis}

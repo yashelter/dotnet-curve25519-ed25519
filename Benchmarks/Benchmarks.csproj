@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>14</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PublishAot>true</PublishAot>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <IsAotCompatible>True</IsAotCompatible>
+        <TieredPGO>true</TieredPGO>
+        <TieredCompilationQuickJit>false</TieredCompilationQuickJit>
+        <ServerGarbageCollection>true</ServerGarbageCollection>
+        <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+        <Optimize>true</Optimize>
+        <OptimizationPreference>Speed</OptimizationPreference>
+        <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+        <IlcInstructionSet>native,avx2,bmi2,popcnt,lzcnt</IlcInstructionSet>
+        <DebuggerSupport>false</DebuggerSupport>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+      <PackageReference Include="ScottPlot" Version="5.1.57" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Core\Core.csproj" />
+    </ItemGroup>
+
+</Project>
