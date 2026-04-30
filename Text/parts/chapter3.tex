@@ -208,21 +208,21 @@ public static void CSwap(ref FieldElement4 a, ref FieldElement4 b, Vector256<ulo
 
 
 Результаты измерений количества выделяемой памяти в куче (Allocated Memory) представлены в на рисунках
- \ref{fig:ed255x25519_table19_bench} и \ref{fig:x25519_table} для кривой Ed25519 и X25519 соответственно.
+ \ref{fig:ed25519_table} и \ref{fig:x25519_table} для кривой Ed25519 и X25519 соответственно.
  В обоих случаях разработанная библиотека не производит аллокаций в управляемой куче, что подтверждает эффективность примененных паттернов Zero Allocation.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{img/table1.png}
-    \caption{Сравнение кривой Ed25519 на среднем числе операций}
-    \label{fig:x25519_table}
+    \caption{Сравнение кривой Ed25519 в потреблении памяти из кучи}
+    \label{fig:ed25519_table}
 \end{figure}
 
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{img/table2.png}
-    \caption{Сравнение кривой X25519 на большом числе операций}
+    \caption{Сравнение кривой X25519 в потреблении памяти}
     \label{fig:x25519_table}
 \end{figure}
 
