@@ -3,6 +3,7 @@
 \usepackage{enumitem}
 \usepackage{amssymb}
 \usepackage{qrcode}
+\urlstyle{same}
 
 % Список первого уровня (itemize)
 \setlist[itemize,1]{
@@ -31,6 +32,24 @@
 \sloppy
 
 \addbibresource{parts/refs.bib}
+
+\DeclareFieldFormat{title}{#1}             % Названия книг/статей
+\DeclareFieldFormat{journaltitle}{#1}      % Названия журналов
+\DeclareFieldFormat{issuetitle}{#1}       % Названия выпусков
+\DeclareFieldFormat{maintitle}{#1}        % Названия многотомников
+\DeclareFieldFormat{booktitle}{#1}         % Названия сборников
+
+\renewcommand*{\mkbibnamefamily}[1]{\textnormal{#1}}
+\renewcommand*{\mkbibnamegiven}[1]{\textnormal{#1}}
+\renewcommand*{\mkbibnameprefix}[1]{\textnormal{#1}}
+\renewcommand*{\mkbibnamesuffix}[1]{\textnormal{#1}}
+
+\DeclareFieldFormat{editortype}{\textnormal{#1}}
+
+\AtBeginBibliography{
+    \let\itshape\relax
+    \let\slshape\relax
+}
 
 \AtBeginDocument{
     \renewcommand{\contentsname}{СОДЕРЖАНИЕ}
