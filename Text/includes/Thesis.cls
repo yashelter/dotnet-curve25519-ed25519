@@ -403,6 +403,10 @@
 
 %% Appendices
 
+\newcounter{appendixfigoffset}
+\newcounter{appendixtaboffset}
+\newcounter{appendixlstoffset}
+
 \newtotcounter{appendicesnum}
 \renewcommand\theappendicesnum{\Asbuk{appendicesnum}}
 \newcommand{\@appendix}[2]{
@@ -410,6 +414,17 @@
     \refstepcounter{appendicesnum}
     \label{appendix:\arabic{appendicesnum}}
     \setcounter{secnumdepth}{0}
+
+    % Запоминаем значения счетчиков на момент входа в текущее приложение
+    \setcounter{appendixfigoffset}{\value{figure}}
+    \setcounter{appendixtaboffset}{\value{table}}
+    \setcounter{appendixlstoffset}{\value{lstlisting}}
+
+    % Переопределяем отображение номеров: [БукваПриложения].[ТекущийНомер - Смещение]
+    % Сами глобальные счетчики при этом продолжают расти, сохраняя правильный totalcount
+    \renewcommand{\thefigure}{\theappendicesnum.\number\numexpr\value{figure}-\value{appendixfigoffset}\relax}
+    \renewcommand{\thetable}{\theappendicesnum.\number\numexpr\value{table}-\value{appendixtaboffset}\relax}
+    \renewcommand{\thelstlisting}{\theappendicesnum.\number\numexpr\value{lstlisting}-\value{appendixlstoffset}\relax}
 
     \begin{center}
         \Large \textbf{\textsc{приложение \theappendicesnum{}}} \\[1ex]
@@ -419,7 +434,6 @@
     \setcounter{secnumdepth}{4}
     \input{#2}
 }
-
 \newcommand*\@makeAppendices{%
     \titleformat{\section}[block]{\Large\bfseries\filcenter}{}{0mm}{}%
 }
